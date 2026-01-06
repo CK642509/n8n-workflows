@@ -8,6 +8,10 @@ USER root
 RUN cd /opt/runners/task-runner-python && \
     uv pip install --python .venv/bin/python pypdf
 
+# # 安裝 npm 套件
+RUN cd /opt/runners/task-runner-javascript && \
+    pnpm add muhammara
+
 # 複製自定義的 n8n-task-runners.json 配置文件
 COPY n8n-task-runners.json /etc/n8n-task-runners.json
 
