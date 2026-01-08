@@ -8,7 +8,8 @@ USER root
 RUN cd /opt/runners/task-runner-python && \
     uv pip install --python .venv/bin/python pypdf
 
-# # 安裝 npm 套件
+# 安裝 npm 套件
+COPY .npmrc /opt/runners/task-runner-javascript/.npmrc
 RUN cd /opt/runners/task-runner-javascript && \
     pnpm add muhammara
 
