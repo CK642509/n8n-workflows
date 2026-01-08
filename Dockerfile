@@ -4,9 +4,9 @@ FROM n8nio/runners:2.1.5
 # 切換到 root 以安裝套件
 USER root
 
-# 安裝 Python 套件
-RUN cd /opt/runners/task-runner-python && \
-    uv pip install --python .venv/bin/python pypdf
+# # 安裝 Python 套件
+# RUN cd /opt/runners/task-runner-python && \
+#     uv pip install --python .venv/bin/python pypdf
 
 # 安裝 npm 套件
 COPY .npmrc /opt/runners/task-runner-javascript/.npmrc
