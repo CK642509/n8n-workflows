@@ -1,4 +1,4 @@
-# 使用 n8n 官方的 python runner 作為基底
+# 使用 n8n 官方的 runner 作為基底
 FROM n8nio/runners:2.1.5
 
 # 切換到 root 以安裝套件
