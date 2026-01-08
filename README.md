@@ -1,4 +1,4 @@
-# n8n-workflows
+# n8n Workflows
 
 這是我的個人 n8n 工作流程管理倉庫，用於快速部署 n8n 自動化平台並管理各種工作流程。
 
@@ -33,7 +33,7 @@ cp example.env .env
 
 3. 啟動 n8n 服務：
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 4. 訪問 n8n 介面：
@@ -41,7 +41,7 @@ docker-compose up -d --build
 
 ### 停止服務
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ## 專案結構
