@@ -1,0 +1,470 @@
+{
+  "name": "批量建立加密薪資單",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        -288
+      ],
+      "id": "155340d2-c9ab-4a4a-8a48-ed48836daac9",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        192,
+        -288
+      ],
+      "id": "05409cd6-ae7b-4cab-a61b-6a77252528f4",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $('從模板複製新的 Doc').first().json.id }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "requests",
+              "value": "={{ $json.data }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b9f5c918-e803-4e46-8ebf-ccad743978a6",
+      "name": "Replace data in Google Doc",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        944,
+        -272
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "C6uYVWRZD5aygnUP",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('從模板複製新的 Doc').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        -272
+      ],
+      "id": "7fa46966-6dcf-4be5-8ae3-ff2b748907e8",
+      "name": "下載並轉成 PDF",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ITx5we8MnQbT23Nq",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ae84fd5a-483b-4296-a17e-366eea5939a5",
+              "name": "current_year_month",
+              "value": "={{ $now.extract('year') - 1911 }}.{{ $now.format('MM') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -176,
+        -288
+      ],
+      "id": "921679f8-26ef-4c80-a59c-a7a17ebf585e",
+      "name": "取得年月"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1_rzBaHawoW8RNehQLyJ12j3pHfZfB5TmPjPHOPaoMQA/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "工作表1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_rzBaHawoW8RNehQLyJ12j3pHfZfB5TmPjPHOPaoMQA/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -16,
+        -288
+      ],
+      "id": "021ae9ad-b630-4c50-bb61-930049281816",
+      "name": "讀取員工資料",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VQFM8oR2Px6xVtvs",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 建立加密薪資單",
+        "height": 208,
+        "width": 1408
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        368,
+        -320
+      ],
+      "typeVersion": 1,
+      "id": "1c9b79b0-6bd5-458d-86eb-c7b4163dfde4",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "PDF建立完畢",
+        "options": {
+          "username": "薪資單小助手",
+          "wait": true
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        416,
+        -512
+      ],
+      "id": "fbd5734c-6b1b-4067-95a2-30ff0c655bbf",
+      "name": "Discord 通知",
+      "webhookId": "4b4dcc10-507e-4938-a2cb-1c72c479cdb2",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "vW0VwAZTsfVOTlvY",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const data = [];\nconst allItems = $('Loop Over Items').all();\n\nallItems.forEach((item) => {\n  Object.keys(item.json).forEach((bodyProperty) => {\n    data.push({\n      key: bodyProperty,\n      value: item.json[bodyProperty],\n    });\n  });\n});\n\n// 加上年月\ndata.push({\n  key: \"current_year_month\",\n  value: $('取得年月').item.json.current_year_month\n})\n\nreturn {\n  webhook_data: data,\n  pairedItem: 0,\n};"
+      },
+      "id": "a280da65-4211-415d-85d8-024b2264324b",
+      "name": "建立對照表",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        592,
+        -272
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = [];\n\n$('建立對照表').all().map((item) => {\n  item.json.webhook_data.map((data) => {\n    if (\"submittedAt\" !== data.key && \"formMode\" !== data.key) {\n      result.push({\n        \"replaceAllText\": {\n            \"containsText\": {\n              \"text\": `{{${data.key}}}`, \n              \"matchCase\": true\n            },\n            \"replaceText\": `${data.value}`\n        },\n      });\n    }\n  });\n})\n\nreturn {\n  data: result,\n  pairedItem: 0,\n};"
+      },
+      "id": "24a3ddc4-4f58-4e79-a9fe-93ead64e674f",
+      "name": "建立 API 所需格式",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        768,
+        -272
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const muhammara = require(\"muhammara\");\nconst { PDFWStreamForBuffer, PDFRStreamForBuffer } = require(\"muhammara\");\n\nfunction encryptPDF(source, password) {\n  return new Promise(function (resolve, reject) {\n    try {\n      let input = new PDFRStreamForBuffer(source);\n      let output = new PDFWStreamForBuffer();\n      muhammara.recrypt(input, output, {\n          password: password,\n          userPassword: password,\n          ownerPassword: password,\n          userProtectionFlag: 4\n      });\n      resolve(output.buffer);\n    } catch (e) {\n      reject(e);\n    }\n  });\n}\n\n// 1. 獲取前一個節點的二進位資料\nconst inputBuffer = await this.helpers.getBinaryDataBuffer(0, 'data');\n\n// 2. 加密\nconst encryptedPDF = await encryptPDF(inputBuffer, $('Loop Over Items').first().json['身分證字號'])\n\n// 3. 將結果回傳給 n8n\nconst filename = `${$('Loop Over Items').first().json['員工編號']}_${$('取得年月').first().json.current_year_month}.pdf`\nreturn [\n  {\n    binary: {\n      data: {\n        data: encryptedPDF.toString('base64'),\n        mimeType: 'application/pdf',\n        fileName: filename,\n        fileExtension: 'pdf'\n      }\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1296,
+        -272
+      ],
+      "id": "a8978e42-d9fc-4ed2-a930-50c4de01c1ac",
+      "name": "加密 PDF"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "=data",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1yVM9-7dnVoUOfEmDMud1YVX7b7GAhy5L",
+          "mode": "list",
+          "cachedResultName": "n8n測試",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1yVM9-7dnVoUOfEmDMud1YVX7b7GAhy5L"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1472,
+        -272
+      ],
+      "id": "1f893b0b-87af-4735-b5c1-5e73a4a39b2a",
+      "name": "上傳加密後的 PDF",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ITx5we8MnQbT23Nq",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "copy",
+        "fileId": {
+          "__rl": true,
+          "value": "1HShlA0nnLMacCtel5W6JAOUqx1GdySEgFuGv4f5kb5M",
+          "mode": "list",
+          "cachedResultName": "薪資明細模板",
+          "cachedResultUrl": "https://docs.google.com/document/d/1HShlA0nnLMacCtel5W6JAOUqx1GdySEgFuGv4f5kb5M/edit?usp=drivesdk"
+        },
+        "name": "={{ $json['員工編號'] }}_{{ $now.extract('year') - 1911 }}.{{ $now.format('MM') }}_{{ $json['身分證字號'] }}",
+        "options": {}
+      },
+      "id": "ecdc29f6-165c-42e7-97b0-beb33a0b1b8f",
+      "name": "從模板複製新的 Doc",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        416,
+        -272
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ITx5we8MnQbT23Nq",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteFile",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('從模板複製新的 Doc').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1648,
+        -272
+      ],
+      "id": "7a877a88-3f61-463d-91fd-f278b8dc2ee5",
+      "name": "移除 Doc",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ITx5we8MnQbT23Nq",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "取得年月",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Discord 通知",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "從模板複製新的 Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace data in Google Doc": {
+      "main": [
+        [
+          {
+            "node": "下載並轉成 PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下載並轉成 PDF": {
+      "main": [
+        [
+          {
+            "node": "加密 PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "取得年月": {
+      "main": [
+        [
+          {
+            "node": "讀取員工資料",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "讀取員工資料": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discord 通知": {
+      "main": [
+        []
+      ]
+    },
+    "建立對照表": {
+      "main": [
+        [
+          {
+            "node": "建立 API 所需格式",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "建立 API 所需格式": {
+      "main": [
+        [
+          {
+            "node": "Replace data in Google Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "加密 PDF": {
+      "main": [
+        [
+          {
+            "node": "上傳加密後的 PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "上傳加密後的 PDF": {
+      "main": [
+        [
+          {
+            "node": "移除 Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "從模板複製新的 Doc": {
+      "main": [
+        [
+          {
+            "node": "建立對照表",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "移除 Doc": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "7eb0c014-71cb-4140-9d79-19fc44b19a44",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "55c73cb3c82687e74c3c24e5e98b8bc507de0057bc91ca7ee080dc891be51b6a"
+  },
+  "id": "xGjdkGqc3SAQX5Lh",
+  "tags": []
+}
